@@ -1,0 +1,255 @@
+---
+title: "The Game scenariosC"
+author: "Andres Baeza"
+date: "January 20, 2017"
+output: html_document
+---
+This is a markdown document to describe how to generate scenarios hydrological harmful events of flooding and scarcity
+```{r}
+require(ggplot2)
+```
+#Scenario A
+```{r, echo=TRUE,fig.height=3,fig.width=8}
+length_total=30
+scenariosA<-data.frame(matrix(ncol=7,nrow=length_total))
+colnames(scenariosA)<-c("Environment","year","season","rounds","Event","cost_event","action-taked")
+scenariosA$season<-rep(c("D","D","D","W","W","W"),5)
+scenariosA$year<-rep(seq(1,5,1),each =6)
+scenariosA$rounds<-rep(c(1,2,3),10)
+scenariosA$Event<-rep(0,length_total)
+scenariosA$cost_event<-rep(0,length_total)
+
+#scenario A
+#define events in dry season
+scenariosA$Environment<-rep("A",length_total)
+level_3_rounds<-sample(which(scenariosA$season =="D"),size = 5,replace = F)
+scenariosA$Event[level_3_rounds]<-3
+scenariosA$cost_event[level_3_rounds]<-3
+level_2_rounds<-sample(which(scenariosA$season =="D" & scenariosA$Event == 0),size = 3,replace = F)
+scenariosA$Event[level_2_rounds]<-2
+scenariosA$cost_event[level_2_rounds]<-2
+level_1_rounds<-sample(which(scenariosA$season =="D" & scenariosA$Event ==0),size = 2,replace = F)
+scenariosA$Event[level_1_rounds]<-1
+scenariosA$cost_event[level_1_rounds]<-1
+
+#define events in wet season
+level_3_rounds<-sample(which(scenariosA$season =="W"),size = 1,replace = F)
+scenariosA$Event[level_3_rounds]<-3
+scenariosA$cost_event[level_3_rounds]<-3
+
+level_2_rounds<-sample(which(scenariosA$season =="W" & scenariosA$Event == 0),size = 2,replace = F)
+scenariosA$Event[level_2_rounds]<-2
+scenariosA$cost_event[level_2_rounds]<-2
+
+level_1_rounds<-sample(which(scenariosA$season =="W" & scenariosA$Event ==0),size = 7,replace = F)
+scenariosA$Event[level_1_rounds]<-1
+scenariosA$cost_event[level_1_rounds]<-1
+
+```
+
+#Scenario B
+```{r, echo=TRUE}
+
+scenariosB<-data.frame(matrix(ncol=7,nrow=length_total))
+colnames(scenariosB)<-c("Environment","year","season","rounds","Event","cost_event","action-taked")
+scenariosB$season<-rep(c("D","D","D","W","W","W"),5)
+scenariosB$year<-rep(seq(1,5,1),each =6)
+scenariosB$rounds<-rep(c(1,2,3),10)
+scenariosB$Event<-rep(0,length_total)
+scenariosB$cost_event<-rep(0,length_total)
+
+scenariosB$Environment<-rep("B",length_total)
+#define events in dry season
+level_3_rounds<-sample(which(scenariosB$season =="D"),size = 3,replace = F)
+scenariosB$Event[level_3_rounds]<-3
+scenariosB$cost_event[level_3_rounds]<-3
+level_2_rounds<-sample(which(scenariosB$season =="D" & scenariosB$Event == 0),size = 3,replace = F)
+scenariosB$Event[level_2_rounds]<-2
+scenariosB$cost_event[level_2_rounds]<-2
+level_1_rounds<-sample(which(scenariosB$season =="D" & scenariosB$Event ==0),size = 4,replace = F)
+scenariosB$Event[level_1_rounds]<-1
+scenariosB$cost_event[level_1_rounds]<-1
+#define events in wet season
+level_3_rounds<-sample(which(scenariosB$season =="W"),size = 3,replace = F)
+scenariosB$Event[level_3_rounds]<-3
+scenariosB$cost_event[level_3_rounds]<-3
+level_2_rounds<-sample(which(scenariosB$season =="W" & scenariosB$Event == 0),size = 3,replace = F)
+scenariosB$Event[level_2_rounds]<-2
+scenariosB$cost_event[level_2_rounds]<-2
+level_1_rounds<-sample(which(scenariosB$season =="W" & scenariosB$Event ==0),size = 3,replace = F)
+scenariosB$Event[level_1_rounds]<-1
+scenariosB$cost_event[level_1_rounds]<-1
+
+```
+
+
+
+#Scenario C
+```{r, echo=TRUE}
+scenariosC<-data.frame(matrix(ncol=7,nrow=length_total))
+colnames(scenariosC)<-c("Environment","year","season","rounds","Event","cost_event","action-taked")
+scenariosC$season<-rep(c("D","D","D","W","W","W"),5)
+scenariosC$year<-rep(seq(1,5,1),each =6)
+scenariosC$rounds<-rep(c(1,2,3),10)
+scenariosC$Event<-rep(0,length_total)
+scenariosC$cost_event<-rep(0,length_total)
+
+scenariosC$Environment<-rep("C",length_total)
+#define events in dry season
+level_3_rounds<-sample(which(scenariosC$season =="D"),size = 1,replace = F)
+scenariosC$Event[level_3_rounds]<-3
+scenariosC$cost_event[level_3_rounds]<-3
+level_2_rounds<-sample(which(scenariosC$season =="D" & scenariosC$Event == 0),size = 2,replace = F)
+scenariosC$Event[level_2_rounds]<-2
+scenariosC$cost_event[level_2_rounds]<-2
+level_1_rounds<-sample(which(scenariosC$season =="D" & scenariosC$Event ==0),size = 7,replace = F)
+scenariosC$Event[level_1_rounds]<-1
+scenariosC$cost_event[level_1_rounds]<-1
+#define events in wet season
+level_3_rounds<-sample(which(scenariosC$season =="W"),size = 5,replace = F)
+scenariosC$Event[level_3_rounds]<-3
+scenariosC$cost_event[level_3_rounds]<-3
+level_2_rounds<-sample(which(scenariosC$season =="W" & scenariosC$Event == 0),size = 3,replace = F)
+scenariosC$Event[level_2_rounds]<-2
+scenariosC$cost_event[level_2_rounds]<-2
+level_1_rounds<-sample(which(scenariosC$season =="W" & scenariosC$Event ==0),size = 2,replace = F)
+scenariosC$Event[level_1_rounds]<-1
+scenariosC$cost_event[level_1_rounds]<-1
+
+
+```
+
+
+
+```{r, echo=TRUE}
+
+table_concatScenarios<-cbind(scenariosA$season,scenariosA$Event,scenariosB$season,scenariosB$Event,scenariosC$season,scenariosC$Event)
+colnames(table_concatScenarios)<-c("SA","EA","SB","EB","SC","EC")
+write.csv(x = table_concatScenarios,file = "~/MEGADAPT/games/table_scenarios.csv")
+```
+
+
+
+```{r, echo=TRUE}
+ggplot(data = scenariosA,aes(y=Event,x=(1:30)))+geom_line()+
+  geom_line(data = scenariosB,colour="green")+
+geom_line(data = scenariosC,colour="blue")
+```
+
+#Best strategy
+A scheme to evaluate what sequence of actions, or the strategy that generate the largest benefits, measured as
+$B = I - (C - A_d)-C_{A_{d}}$  
+where
+$C$: is the cost of the harful event
+$A_d$: is the level of adaptation 
+
+The goal is to find strategy $S$ that maximized benefit $B$
+
+codon1=Do nothing
+codon2=protests
+codon3=water_Storage1
+codon4=water_Storage2
+codon5=house modification 1
+codon6=house modification 2
+
+
+
+
+```{r, echo=TRUE}
+
+evalFunc <- function(ch) {
+
+  B<-numeric(1+length(ch))
+
+    
+  B[1]=3
+  cost_Ad=0
+  
+   for(t in 2 :(1 + length(ch))){
+     cost_E=scenariosC$cost_event[(t-1)] 
+ #########################################################################################    
+     if (t <= 4){
+      if (scenariosC$season[(t-1)] == "D"){
+        if (scenariosC$Event[(t-1)] == 1){if (any(ch[1:(t-1)] == 3)){cost_E=0}}
+        if (scenariosC$Event[(t-1)] == 2){if (any(ch[1:(t-1)] == 3) & any(ch[1:(t-1)] == 4)){cost_E=0}}
+      }
+
+      if (scenariosC$season[(t-1)] == "W"){
+        if (scenariosC$Event[(t-1)] == 1){if (any(ch[1:(t-1)] == 5)){cost_E=0}}
+        if (scenariosC$Event[(t-1)] == 2){if (any(ch[1:(t-1)] == 5) & any(ch[1:(t-1)] == 6)){cost_E=0}
+          
+          }
+      
+      }
+       if(any(ch[1:(t-1)] ==3) & any(ch[1:(t-1)] ==4)){
+        if(which(ch[1:(t-1)] == 4)[1] < which(ch[1:(t-1)] == 3)[1]){cost_E=Inf}
+       }
+       if(any(ch[1:(t-1)] ==5) & any(ch[1:(t-1)]==6)){
+         if(which(ch[1:(t-1)] == 6)[1] < which(ch[1:(t-1)] == 5)[1]){cost_E=Inf}
+      }
+     }
+ #########################################################################################    
+     
+     if (t > 4){
+      if (scenariosC$season[(t-1)] == "D"){
+        if (scenariosC$Event[(t-1)] == 1){if (any(ch[(t-4):(t-1)] == 3)){cost_E=0}}
+        if (scenariosC$Event[(t-1)] == 2){if (any(ch[(t-4):(t-1)] == 3) & any(ch[(t-4):(t-1)] == 4)){cost_E=0}}
+      }
+
+      if (scenariosC$season[(t-1)] == "W"){
+        if (scenariosC$Event[(t-1)] == 1){if (any(ch[(t-4):(t-1)] == 5)){cost_E=0}}
+        if (scenariosC$Event[(t-1)] == 2){if (any(ch[(t-4):(t-1)] == 5) & any(ch[(t-4):(t-1)] == 6)){cost_E=0}}
+      }  
+       
+       
+       if(any(ch[(t-4):(t-1)] ==3) & any(ch[(t-4):(t-1)] ==4)){
+        if(which(ch[(t-4):(t-1)] == 4)[1] < which(ch[(t-4):(t-1)] == 3)[1]){cost_E=Inf}
+       }
+       if(any(ch[(t-4):(t-1)] ==5) & any(ch[(t-4):(t-1)]==6)){
+         if(which(ch[(t-4):(t-1)] == 6)[1] < which(ch[(t-4):(t-1)] == 5)[1]){cost_E=Inf}
+   }
+       
+     }
+ #########################################################################################    
+     
+     
+     if (scenariosC$Event[(t-1)] == 3){
+       cost_E=3
+     } 
+     
+     
+     if (ch[(t-1)]== 1){cost_Ad=0}
+     if (ch[(t-1)]== 2){cost_Ad=1}
+     if (ch[(t-1)] != 1 & ch[(t-1)]!= 2){cost_Ad=3}
+      
+    B[t] = B[t-1] + 2 - cost_E - cost_Ad
+     
+}
+
+
+ current_solution_survivalpoints= - sum(B[-1])
+
+ return(current_solution_survivalpoints)
+}
+
+#Monitor function
+monitorFunc <- function(result) {
+    cat("Best of gen: ", min(result$best$cost), "\n")
+}
+chrom<-c(3, 2, 1, 5, 3, 4, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 6, 1, 2, 2, 3, 1, 4, 1, 2, 1)
+evalFunc(chrom)
+```
+
+
+```{r, echo=TRUE}
+require(gramEvol)
+best_strategyC<-EvolutionStrategy.int(genomeLen = length_total, genomeMin = rep(1,length_total), genomeMax = rep(6,length_total), evalFunc = evalFunc,iterations = 400)
+best_strategies<-data.frame(genome=best_strategyC$best$genome,simul=rep(1,30),timestep=1:30)
+for (i in 2:10){
+best_strategyC<-EvolutionStrategy.int(genomeLen = length_total, genomeMin = rep(1,length_total), genomeMax = rep(6,length_total), evalFunc = evalFunc,iterations = 400)
+best_strategies=rbind(best_strategies,cbind(genome=best_strategyC$best$genome,simul=rep(i,30),timestep=1:30))
+}
+ggplot(data=best_strategies,aes(x=timestep,y=genome,colour=factor(simul)))+geom_point()+geom_smooth(method = "lm")
+ggplot(data=best_strategies,aes(x=factor(genome),colour=factor(genome)))+geom_boxplot()
+```
+
