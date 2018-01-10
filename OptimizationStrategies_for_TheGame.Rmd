@@ -1,0 +1,290 @@
+---
+title: "The Game of floods"
+author: "Andres Baeza"
+date: "January 20, 2017"
+output: html_document
+---
+This is a markdown document to describe how to generate scenarios for the game of flooding and scarcity In Mexico City. The scenarios correspond to the events of enviromental harmful events and the strategies of adaptation under uncertain climate signal and authority responses. Information about the game can be obtained in Shelton et al. (In preparation).
+
+The game can be formalized mathematically. In this way we can aim to find the optimal strategy of decition that lead to the maximum outcome for a player, given the enviroment in which decision are made. We do so by creating scenarios of harful events over time. These scenarios are combined of number of events of different magnitude for two type of hazards: water scarcity and flooding.
+
+###Load the R Packages
+```{r}
+require(ggplot2)#plots
+require(gramEvol)#genetic algorithm
+require(knitr) #tables
+require(kableExtra) #tables
+```
+
+##Define the parameters of the game and the rules
+###Define length of game
+```{r}
+years = 6 #number of years
+ts_py = 4 #time-steps per year
+length_total= years * ts_py  #length of the time series
+```
+
+###Define damage of environmental hazards and imcome per year 
+In the game, three types of events can be defined based on the magnitude: moderate, grave and Critical such that:
+
+$E=$ $\{e_1,e_t,e_3\}$
+The level of damage caused by an event, $e$ is define as the cost of the event, such that 
+$C=$ $\{C_{e_1},C_{e_2},C_{e_3}\}$
+
+Every time-step, $t$ a player can take an action $a_j$ froma set of posible actions $A=$ $\{a_j\}$ for $j=$ $\{1,...,J\}$
+The set of posible actions are
+
+
+
+
+
+Each player recives a time-step income, $I_t$.
+
+
+```{r}
+cost_moderate_event=1#Moderate
+cost_grave_event=4#Grave
+cost_critical_event=5#Critical
+
+Income=10
+
+p_response=0.05 # likelihood authority responds to a protest
+```
+
+### Define the cost of each action and level of protection
+```{r}
+Cost_protest=3
+Cost_WS1=1
+Cost_WS2=5
+Cost_HM1=1
+Cost_HM2=4
+
+protection_WS1=1
+protection_WS2=2
+
+protection_HM1=1
+protection_HM2=2
+```
+
+###Table of action options, costs, and level of protection
+```{r}
+
+Table1<-data.frame(Actions=c("Do nothing","Protests","Storage water 1","Storage water 2","House modification 1","House modification 2"),
+           Cost=c(0,Cost_protest,Cost_HM1,Cost_HM2,Cost_HM1,Cost_HM2),
+           Protection=c(0,"Unknown","Moderate water shortage","Grave water shortage","Moderate flood","Grave flood"))
+
+kable(Table1,"html") %>%
+  column_spec(column = 2,width="5em") %>%
+  column_spec(column = 3,width="10em")
+```
+
+
+###Define number of events with different damage per sequence of events
+```{r}
+#cost of water scarcity
+number_critical_D=4
+number_grave_D=2
+number_moderate_D=1
+
+#cost of floods
+number_critical_W=4
+number_grave_W=1
+number_moderate_W=1
+
+
+Total=number_critical_D+number_grave_D+number_moderate_D+number_critical_W+number_grave_W+number_moderate_W
+if (Total > years * ts_py){
+  stop() 
+  print("stop: more events than timesteps")
+}
+```
+
+#Define the data frame to store the information to define a scenario
+Using the rules of the game and the parametrs of costs and protection
+```{r, echo=TRUE,fig.height=3,fig.width=8}
+scenarios<-data.frame(matrix(ncol=7,nrow=length_total))
+colnames(scenarios)<-c("Environment","year","season","rounds","Event","cost_event","action-taked")
+scenarios$season<-rep(c("D","D","W","W"),years)
+scenarios$year<-rep(seq(1,years,1),each = ts_py)
+scenarios$rounds<-rep(c(1,2,1,2), years)
+scenarios$Event<-rep(0,length_total)
+scenarios$cost_event<-rep(0,length_total)
+
+#define events in dry season
+scenarios$Environment<-rep("A",
+                            length_total)
+
+
+level_3_rounds<-sample(x = which(scenarios$season =="D"),
+                       size = number_critical_D,
+                       replace = F)
+
+scenarios$Event[level_3_rounds]<-3
+scenarios$cost_event[level_3_rounds]<-cost_critical_event
+
+
+level_2_rounds<-sample(x = which(scenarios$season =="D" & scenarios$Event == 0),
+                       size = number_grave_D,
+                       replace = F)
+
+scenarios$Event[level_2_rounds]<-2
+scenarios$cost_event[level_2_rounds]<-cost_grave_event
+
+
+
+level_1_rounds<-sample(x = which(scenarios$season =="D" & scenarios$Event ==0),
+                       size = number_moderate_D,
+                       replace = F)
+
+scenarios$Event[level_1_rounds]<-1
+scenarios$cost_event[level_1_rounds]<-cost_moderate_event
+
+#define events in wet season
+level_3_rounds<-sample(which(scenarios$season =="W"),size = number_critical_W,replace = F)
+scenarios$Event[level_3_rounds]<-3
+scenarios$cost_event[level_3_rounds]<-cost_critical_event
+
+level_2_rounds<-sample(which(scenarios$season =="W" & scenarios$Event == 0),size = number_grave_W,replace = F)
+scenarios$Event[level_2_rounds]<-2
+scenarios$cost_event[level_2_rounds]<-cost_grave_event
+
+level_1_rounds<-sample(which(scenarios$season =="W" & scenarios$Event ==0),size = number_moderate_W,replace = F)
+scenarios$Event[level_1_rounds]<-1
+scenarios$cost_event[level_1_rounds]<-cost_moderate_event
+
+```
+
+#Optimization using GA
+A scheme to evaluate what sequence of actions (the strategy) is the one that generates the largest benefit is constructed using Genetic algorithm (GA).
+First, an objective function is contructed to compute the time-varying outcome of income, costas and protection using:
+
+The goal is to find the sequence of actions, $S=$$\{a_1,...,a_t,...,a_T\}$, that maximized outcome $\sum_{t=1}^{T}O_t$. Formally, the timestep outcome is calculated using 
+
+$$O_t = I_t - (C_{e,t} - P_{a,t})$$  
+
+where
+$I_t$: Income per unit of time
+
+$C_{e,t}$: Cost of an event of magnitude $e$ at time $t$ (if any)
+
+$P_{a,t}$: The level of protection of action $a$ at time $t$ (if any) 
+
+\begin{equation*}
+\begin{aligned}
+& \underset{S}{\text{maximize}}
+& & \sum_{t=1}^{T}O_t \\
+& \text{subject to}
+& & S \leq b_i, \; i = 1, \ldots, m.
+\end{aligned}
+\end{equation*}
+
+
+
+```{r, echo=TRUE}
+
+evalFunc <- function(ch) {
+
+  O<-numeric(1+length(ch)) #length of gen based on number of "codons"
+
+    
+  O[1]=0  #nothing in the first time-step
+  cost_Ad=0
+  
+   for(t in 2 :(1 + length(ch))){
+     cost_E=scenarios$cost_event[(t-1)] 
+ 
+      if (t <= 4){
+       if (scenarios$season[(t-1)] == "D"){
+        if (scenarios$Event[(t-1)] == 1){if (any(ch[1:(t-1)] == 3 | ch[1:(t-1)] == 4)){cost_E=0}}
+        if (scenarios$Event[(t-1)] == 2){if (any(ch[1:(t-1)]== 4)){cost_E=0}}
+       }
+
+       
+       if (scenarios$season[(t-1)] == "W"){
+        if (scenarios$Event[(t-1)] == 1){if (any(ch[1:(t-1)] == 5 | ch[1:(t-1)] == 6)){cost_E=0}}
+        if (scenarios$Event[(t-1)] == 2){if (any(ch[1:(t-1)] == 6)){cost_E=0}}
+       }
+      }
+ #########################################################################################    
+     
+     if (t > 4){
+        if (scenarios$season[(t-1)] == "D"){
+          if (scenarios$Event[(t-1)] == 1){if (any(ch[(t-4):(t-1)] == 3) | any(ch[(t-4):(t-1)] == 4)){cost_E=0}}
+          if (scenarios$Event[(t-1)] == 2){if (any(ch[(t-4):(t-1)] == 4)){cost_E=0}}
+        }
+
+        if (scenarios$season[(t-1)] == "W"){
+          if (scenarios$Event[(t-1)] == 1){if (any(ch[(t-4):(t-1)] == 5) | any(ch[(t-4):(t-1)] == 6)){cost_E=0}}
+          if (scenarios$Event[(t-1)] == 2){if (any(ch[(t-4):(t-1)] == 6)){cost_E=0}}
+        }  
+      }
+ #########################################################################################    
+# considert the cost of critical events     
+      if (scenarios$Event[(t-1)] == 3){cost_E=3} 
+ #########################################################################################    
+ # Calculate the cost of the actions      
+     if (ch[(t-1)]==1){cost_Ad=0}
+     if (ch[(t-1)]== 2){cost_Ad=Cost_protest * rbinom(n = 1,size=1,prob = (1-p_response))}
+     if (ch[(t-1)]==3){cost_Ad=Cost_WS1}
+     if (ch[(t-1)]==4){cost_Ad=Cost_WS2}
+     if (ch[(t-1)]==5){cost_Ad=Cost_HM1}
+     if (ch[(t-1)]==5){cost_Ad=Cost_HM2}
+
+    O[t] = Income - cost_E - cost_Ad  #objective function
+     
+}
+
+
+ current_solution_survivalpoints= (- sum(O[-1]))
+
+ return(current_solution_survivalpoints)
+}
+
+#Monitor function
+monitorFunc <- function(result) {
+    cat("Best of gen: ", min(result$best$cost), "\n")
+}
+```
+
+
+```{r, echo=TRUE}
+
+best_strategy<-EvolutionStrategy.int(genomeLen = length_total, 
+                                      genomeMin = rep(1,length_total), 
+                                      genomeMax = rep(6,length_total), 
+                                      evalFunc = evalFunc,iterations = 400)
+
+
+best_strategies<-data.frame(genome=best_strategy$best$genome,
+                            simul=rep(1,length_total),
+                            timestep=1:length_total)
+for (i in 2:10){
+    best_strategy<-EvolutionStrategy.int(genomeLen = length_total, 
+                                      genomeMin = rep(1,length_total), 
+                                      genomeMax = rep(6,length_total),
+                                      evalFunc = evalFunc,
+                                      iterations = 400)
+
+    best_strategies=rbind(best_strategies,cbind(genome=best_strategy$best$genome,simul=rep(i,length_total),timestep=1:length_total))
+print(evalFunc(subset(best_strategies,simul==i)$genome))
+    }
+```
+
+
+##Display the environmental Scenario
+red and blue dots for Dry and Wet seasons respectivelly 
+```{r, echo=TRUE}
+ggplot(data = scenarios,aes(y=Event,x=(1:length_total),size=Event,colour=season))+geom_point()
+```
+
+##Display the frequqncy of Evolving actions
+Counts of actions used  in the environmental scenario
+```{r,fig.align="center",fig.width=6,fig.height=3}
+ggplot(data=best_strategies,aes(x=factor(genome),colour=factor(genome)))+geom_bar()
+
+```
+
+
+```{r,fig.align="center",fig.width=6,fig.height=3}
+ggplot(data=best_strategies,aes(y=timestep,x=factor(genome),colour=factor(genome)))+geom_boxplot()
+```
